@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>재무기획본부 학습과 소통 대시보드</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap');
+  body { font-family: 'Noto Sans KR', sans-serif; }
+  .ping { animation: ping 1.5s cubic-bezier(0,0,.2,1) infinite; }
+  @keyframes ping { 75%,100% { transform:scale(2); opacity:0; } }
+</style>
+<script>
+tailwind.config = {
+  theme: { extend: { fontFamily: { sans: ['Noto Sans KR','sans-serif'] } } }
+}
+</script>
+</head>
+<body class="min-h-screen bg-slate-50">
+
+<!-- Header -->
+<header class="sticky top-0 z-50 border-b bg-white/95 backdrop-blur">
+  <div class="mx-auto max-w-screen-2xl px-4 sm:px-6 lg:px-8">
+    <div class="flex h-14 items-center gap-3">
+      <svg class="h-6 w-6 text-blue-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 14l9-5-9-5-9 5 9 5z"/><path d="M12 14l6.16-3.422A12.083 12.083 0 0 1 21 12.5V17l-9 5-9-5v-4.5a12.083 12.083 0 0 1 2.84-1.922L12 14z"/></svg>
+      <h1 class="text-lg font-bold text-slate-900">재무기획본부 학습과 소통</h1>
+      <span class="ml-2 rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-700">2026</span>
+      <div class="ml-auto flex items-center gap-2">
+        <button onclick="downloadExcel()" class="inline-flex items-center gap-1.5 rounded-md bg-emerald-600 px-3 py-1.5 text-sm font-medium text-white shadow-sm hover:bg-emerald-700 transition-colors">
+          <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+          엑셀 다운로드
+        </button>
+        <button onclick="downloadPDF()" class="inline-flex items-center gap-1.5 rounded-md bg-red-600 px-3 py-1.5 text-sm font-medium text-white shadow-sm hover:bg-red-700 transition-colors">
+          <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+          PDF 다운로드
+        </button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main class="mx-auto max-w-screen-2xl px-4 py-6 sm:px-6 lg:px-8 space-y-6" id="app"></main>
+
+<script>
+// ── Data ──
+const roadmap = [
+  { month:4, half:'상반기', title:'월마감 체크리스트 이해 + Cut-off(수익/비용 인식) + 세금계산서 실무 통합 교육', subtitle:'마감 정확성 + 기간귀속 판단 + 세무 리스크 통제 집중', owner:'회계',
+    purpose:['마감 누락 및 오류를 구조적으로 줄이고','수익/비용 인식 시점 판단 오류(Cut-off)를 사전에 차단하며','세금계산서 오류 및 매입세액 공제 리스크를 예방'],
+    content:['월마감 체크리스트 전체 흐름 이해','주요 마감 누락 유형 (전표/충당금/정산 등)','Cut-off 기준 (3/31 vs 4/1 사례 중심)','선급비용 / 미지급비용 / 선수수익 판단 기준','세금계산서 발행·수취 요건 및 적격 증빙 기준','매입세액 공제 가능·불가 기준 (불공제 주요 사례 포함)'],
+    practice:['실제 마감 체크리스트 제공 후 → 일부 누락/오류 숨겨진 상태에서 점검 수행','기간귀속 오류 케이스 분석 → (매출/비용 시점 판단)','오류 세금계산서 샘플 제공 → 적정/부적정 판별 실습','매입세액 공제 여부 케이스별 판단 → (O/X + 근거 작성)'],
+    test:['마감 누락 항목 식별 문제','Cut-off 판단 객관식 + 사례형 문제','오류 전표 vs 정상 전표 구분','세금계산서 적정/부적정 판별 문제','매입세액 공제 가능/불가 판단 문제 (O/X + 사유)'] },
+  { month:5, half:'상반기', title:'CMS, 펌뱅킹 자금집행 프로세스 이해', subtitle:'통제 포인트 점검 실습', owner:'재무',
+    practice:['자금집행 흐름별 통제 포인트 매핑','승인 누락/이체 오류 사례 식별'],
+    test:['비정상 거래 탐지','통제 미흡 구간 도출'], note:'자금 영역 유일 주제' },
+  { month:6, half:'상반기', title:'전결규정 이해 + 예산관리 및 통제 교육', subtitle:'의사결정 기준 + 비용 통제 역량 강화', owner:'기획',
+    purpose:['승인 체계에 대한 명확한 기준 확보','예산 수립/집행/통제 전 과정 이해 및 실행력 강화'],
+    content:['전결규정 구조 및 승인 단계별 역할','승인 금액 기준 및 예외 케이스','예산 수립 → 배정 → 집행 → 통제 프로세스','예산 초과/오용 발생 주요 사례'],
+    practice:['실제 전결 케이스 기반 승인 라인 설정','예산 대비 집행 데이터 분석','예산 초과 발생 시 대응 시나리오 작성'],
+    test:['전결 승인 적정성 판단 문제','예산 초과/오용 사례 판별','"집행 가능/불가" 판단 문제'] },
+  { month:7, half:'상반기', title:'대웅/대웅제약 연결회계 시스템 사용 교육', subtitle:'연결 패키지 오류 유형 및 사전 점검 체크리스트', owner:'회계',
+    practice:['연결 패키지 오류 데이터 제공','체크리스트 기반 검토'],
+    test:['반복 오류 유형 식별','연결 조정 필요 여부 판단'] },
+  { month:8, half:'상반기', title:'현금흐름표 작성 교육 및 실습', subtitle:'손익에서 현금흐름표 변환', owner:'회계',
+    practice:['손익 → CF 변환','영업/투자/재무활동 구분'],
+    test:['잘못 분류된 항목 수정','CF 구조 오류 찾기'] },
+  { month:9, half:'하반기', title:'상반기 실적 점검 및 회사별 관리지표 공유', subtitle:'관리지표 개선 방향 논의', owner:'쉐어드1팀',
+    practice:['회사별 지표 구조 비교','비효율 지표 제거/개선'],
+    test:['지표 적정성 평가','개선안 작성'] },
+  { month:10, half:'하반기', title:'관리지표 활용한 경영 의사결정 우수사례 공유', subtitle:'현업 활용도 강화 방안', owner:'쉐어드1팀',
+    practice:['우수 사례 분석','자사 적용 시나리오 작성'],
+    test:['"이 상황에서 어떤 지표를 활용할 것인가" 판단'] },
+  { month:11, half:'하반기', title:'IFRS 18 도입에 따른 손익 관리 영향 점검', subtitle:'기존 손익 vs IFRS18 구조 비교', owner:'회계',
+    practice:['기존 손익 vs IFRS18 구조 비교','영향 항목 식별'],
+    test:['분류 변경 판단','관리손익 영향 분석'] },
+  { month:12, half:'하반기', title:'회계/기획 통합 케이스 기반 종합 점검', subtitle:'마감 + 손익 + 지표 + CF 통합 시나리오', owner:'회계/기획',
+    practice:['마감 + 손익 + 지표 + CF 통합 시나리오'],
+    test:['종합 케이스 문제 (mini 프로젝트)'] },
+];
+
+const ownerBg   = { '재무':'bg-amber-100 text-amber-800 border border-amber-200', '회계':'bg-blue-100 text-blue-800 border border-blue-200', '쉐어드1팀':'bg-emerald-100 text-emerald-800 border border-emerald-200', '회계/기획':'bg-purple-100 text-purple-800 border border-purple-200', '기획':'bg-rose-100 text-rose-800 border border-rose-200' };
+const ownerDot  = { '재무':'bg-amber-500', '회계':'bg-blue-500', '쉐어드1팀':'bg-emerald-500', '회계/기획':'bg-purple-500', '기획':'bg-rose-500' };
+const ownerIcon = { '재무':'bg-amber-50', '회계':'bg-blue-50', '쉐어드1팀':'bg-emerald-50', '회계/기획':'bg-purple-50' };
+
+const now = new Date();
+const curMonth = now.getFullYear() === 2026 ? now.getMonth() + 1 : 0;
+const completed = roadmap.filter(i => curMonth > i.month).length;
+const total = roadmap.length;
+const pct = Math.round((completed / total) * 100);
+const curItem = roadmap.find(i => i.month === curMonth);
+
+// ── Helpers ──
+const esc = s => s.replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const badge = (text, cls) => `<span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${cls}">${esc(text)}</span>`;
+
+// ── Render ──
+function render() {
+  const app = document.getElementById('app');
+
+  // Owner counts
+  const ownerCounts = {};
+  roadmap.forEach(i => ownerCounts[i.owner] = (ownerCounts[i.owner]||0) + 1);
+
+  app.innerHTML = `
+  <!-- Overview -->
+  <div class="rounded-xl bg-white p-5 ring-1 ring-slate-200 space-y-5 text-sm text-slate-700 leading-relaxed">
+    <div>
+      <h3 class="font-bold text-slate-900 mb-2">1. 목적과 취지</h3>
+      <ul class="space-y-1 ml-1">
+        <li>- 전 그룹사에 대웅제약 수준의 <span class="font-semibold text-blue-700">표준화된 업무기준, 프로세스 공유</span></li>
+        <li>- 내/외부 성공사례 및 벤치마킹 기반 교육을 통해 <span class="font-semibold text-blue-700">관리직원의 실무 전문성과 문제 해결 역량 강화</span></li>
+        <li>- 회사별 이슈사항 및 애로사항을 오픈하고 공동 해결함으로써 <span class="font-semibold text-blue-700">경영 리스크 사전 차단</span></li>
+        <li>- 인사제도<span class="text-xs text-slate-400">(인수인계서, 월별피드백, CDP, 거현량 등)</span>를 <span class="font-semibold text-blue-700">실무와 연계하여 성과관리와 인재육성이 함께 이루어지도록 운영 기반 강화</span></li>
+      </ul>
+    </div>
+    <div>
+      <h3 class="font-bold text-slate-900 mb-2">2. 참석 대상자</h3>
+      <p class="ml-1">- 대웅그룹 회계/기획 담당 실무자 및 직책자</p>
+    </div>
+    <div>
+      <h3 class="font-bold text-slate-900 mb-2">3. 연간 일정과 주제</h3>
+      <ul class="space-y-1 ml-1">
+        <li>- 매월 2번째, 4번째 목요일 정기 운영 (월2회 체계화)
+          <ul class="ml-4 mt-1 space-y-0.5 text-slate-500">
+            <li>• 1회차: 그룹 공통 기준 및 회계, 세무 교육을 통한 전문성 강화</li>
+            <li>• 2회차: 회사별 이슈 공유 및 실시간 문제 해결 중심 워크숍</li>
+          </ul>
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    ${statCard('📅','전체 세션',`${total}회`,'blue')}
+    ${statCard('🎯','완료',`${completed}<span class="text-sm font-normal text-slate-400">/${total}</span>`,'emerald')}
+    ${statCard('📈','진행률',`${pct}%`,'amber')}
+    ${statCard('👥','이번 달 주관',curItem ? curItem.owner : '-','purple')}
+  </div>
+
+  <!-- Progress -->
+  <div class="rounded-xl bg-white p-4 ring-1 ring-slate-200">
+    <div class="flex items-center justify-between mb-2">
+      <span class="text-sm font-medium text-slate-700">2026년 학습과 소통 진행률</span>
+      <span class="text-sm text-slate-500">${pct}%</span>
+    </div>
+    <div class="h-2 w-full rounded-full bg-slate-100">
+      <div class="h-2 rounded-full bg-blue-600 transition-all" style="width:${pct}%"></div>
+    </div>
+  </div>
+
+
+  <!-- Calendar grid -->
+  <div class="rounded-xl bg-white p-5 ring-1 ring-slate-200">
+    <h3 class="font-semibold text-slate-900 mb-4">월별 캘린더 뷰</h3>
+    <div class="grid grid-cols-3 gap-3 sm:grid-cols-4 lg:grid-cols-9">
+      ${roadmap.map(i => {
+        const isPast = curMonth > i.month;
+        const isCur = curMonth === i.month;
+        return `
+        <div class="relative rounded-lg border p-3 text-center transition-colors ${isCur ? 'border-blue-400 bg-blue-50 ring-1 ring-blue-200' : isPast ? 'border-slate-200 bg-slate-50 opacity-60' : 'border-slate-200 bg-white'}">
+          <div class="mb-1 text-lg font-bold text-slate-800">${i.month}월</div>
+          <div class="mx-auto mb-2 h-1.5 w-8 rounded-full ${ownerDot[i.owner]}"></div>
+          <p class="text-xs text-slate-600 line-clamp-2">${i.title.length > 12 ? esc(i.title.slice(0,12))+'...' : esc(i.title)}</p>
+          <div class="mt-2">${badge(i.owner, ownerBg[i.owner] + ' text-[10px] px-1.5 py-0')}</div>
+          ${isCur ? '<div class="absolute -top-1.5 right-1"><span class="relative flex h-3 w-3"><span class="ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span><span class="relative inline-flex h-3 w-3 rounded-full bg-blue-500"></span></span></div>' : ''}
+        </div>`;
+      }).join('')}
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div>
+    <div class="flex gap-1 mb-4">
+      <button id="btn-timeline" onclick="switchTab('timeline')" class="tab-btn rounded-md px-4 py-1.5 text-sm font-medium bg-blue-50 text-blue-700">타임라인</button>
+      <button id="btn-table" onclick="switchTab('table')" class="tab-btn rounded-md px-4 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-100">테이블</button>
+    </div>
+    <div id="tab-timeline">${renderTimeline()}</div>
+    <div id="tab-table" class="hidden">${renderTable()}</div>
+  </div>
+  `;
+}
+
+function statCard(icon, label, value, color) {
+  return `
+  <div class="rounded-xl bg-white p-4 ring-1 ring-slate-200 flex items-center gap-3">
+    <div class="rounded-lg ${color==='blue'?'bg-blue-50':color==='emerald'?'bg-emerald-50':color==='amber'?'bg-amber-50':'bg-purple-50'} p-2.5 text-lg">${icon}</div>
+    <div>
+      <p class="text-xs text-slate-500">${label}</p>
+      <p class="text-xl font-bold text-slate-900">${value}</p>
+    </div>
+  </div>`;
+}
+
+function renderTimeline() {
+  const halves = [
+    { label:'1. 상반기 (기초 정확성 + 마감 역량)', range:'4월 ~ 8월', items: roadmap.filter(i=>i.half==='상반기') },
+    { label:'2. 하반기 (분석/활용/의사결정)', range:'9월 ~ 12월', items: roadmap.filter(i=>i.half==='하반기') },
+  ];
+  return halves.map(h => `
+    <div class="mb-8">
+      <div class="flex items-center gap-2 mb-4">
+        <h3 class="text-lg font-bold text-slate-900">${h.label}</h3>
+        ${badge(h.range,'border border-slate-200 text-slate-600')}
+      </div>
+      <div class="ml-1">
+        ${h.items.map(i => timelineCard(i)).join('')}
+      </div>
+    </div>
+  `).join('');
+}
+
+function timelineCard(item) {
+  const isPast = curMonth > item.month;
+  const isCur = curMonth === item.month;
+  const id = `card-${item.month}`;
+  return `
+  <div class="relative flex gap-4">
+    <div class="flex flex-col items-center">
+      <div class="z-10 flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white ${isCur?'bg-blue-600 ring-4 ring-blue-100':isPast?'bg-slate-400':'bg-slate-300'}">${item.month}월</div>
+      <div class="w-px flex-1 bg-slate-200"></div>
+    </div>
+    <div class="mb-6 flex-1 rounded-xl bg-white ring-1 ring-slate-200 cursor-pointer transition-shadow hover:shadow-md ${isCur?'ring-2 ring-blue-400':''} ${isPast?'opacity-70':''}" onclick="toggle('${id}')">
+      <div class="p-4">
+        <div class="flex items-center justify-between mb-1">
+          <div class="flex items-center gap-2">
+            <span class="inline-block h-2.5 w-2.5 rounded-full ${ownerDot[item.owner]}"></span>
+            ${badge(item.owner, ownerBg[item.owner])}
+            ${isCur ? badge('진행중','bg-blue-600 text-white') : ''}
+            ${isPast ? badge('완료','bg-slate-100 text-slate-600') : ''}
+          </div>
+          <svg id="chevron-${id}" class="h-4 w-4 text-slate-400 transition-transform" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7"/></svg>
+        </div>
+        <p class="font-semibold text-slate-900">${esc(item.title)}</p>
+        <p class="text-sm text-slate-500">${esc(item.subtitle)}</p>
+      </div>
+      <div id="${id}" class="hidden px-4 pb-4 space-y-3">
+        ${item.purpose ? `<div>
+          <div class="flex items-center gap-1.5 text-sm font-semibold text-slate-700 mb-1">
+            <svg class="h-4 w-4 text-violet-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+            교육 목적
+          </div>
+          <ul class="ml-5 list-disc space-y-0.5 text-sm text-slate-600">${item.purpose.map(p=>`<li>${esc(p)}</li>`).join('')}</ul>
+        </div>` : ''}
+        ${item.content ? `<div>
+          <div class="flex items-center gap-1.5 text-sm font-semibold text-slate-700 mb-1">
+            <svg class="h-4 w-4 text-sky-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+            교육 내용
+          </div>
+          <ul class="ml-5 list-disc space-y-0.5 text-sm text-slate-600">${item.content.map(c=>`<li>${esc(c)}</li>`).join('')}</ul>
+        </div>` : ''}
+        <div>
+          <div class="flex items-center gap-1.5 text-sm font-semibold text-slate-700 mb-1">
+            <svg class="h-4 w-4 text-blue-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+            실습
+          </div>
+          <ul class="ml-5 list-disc space-y-0.5 text-sm text-slate-600">${item.practice.map(p=>`<li>${esc(p)}</li>`).join('')}</ul>
+        </div>
+        <div>
+          <div class="flex items-center gap-1.5 text-sm font-semibold text-slate-700 mb-1">
+            <svg class="h-4 w-4 text-emerald-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+            테스트
+          </div>
+          <ul class="ml-5 list-disc space-y-0.5 text-sm text-slate-600">${item.test.map(t=>`<li>${esc(t)}</li>`).join('')}</ul>
+        </div>
+        ${item.note ? `<div class="flex items-start gap-2 rounded-lg bg-amber-50 p-3 text-sm text-amber-800">
+          <svg class="mt-0.5 h-4 w-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          ${esc(item.note)}</div>` : ''}
+      </div>
+    </div>
+  </div>`;
+}
+
+function renderTable() {
+  return `
+  <div class="rounded-xl bg-white ring-1 ring-slate-200 overflow-x-auto">
+    <div class="p-5">
+      <h3 class="font-semibold text-slate-900 mb-4">전체 로드맵 요약</h3>
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="border-b text-left text-xs text-slate-500">
+            <th class="pb-2 pr-4 font-medium">월</th>
+            <th class="pb-2 pr-4 font-medium">주관</th>
+            <th class="pb-2 pr-4 font-medium">주제</th>
+            <th class="pb-2 pr-4 font-medium">실습</th>
+            <th class="pb-2 font-medium">테스트</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${roadmap.map(i => `
+          <tr class="border-b last:border-0 ${curMonth===i.month?'bg-blue-50':''}">
+            <td class="py-3 pr-4 font-semibold">${i.month}월</td>
+            <td class="py-3 pr-4">${badge(i.owner, ownerBg[i.owner])}</td>
+            <td class="py-3 pr-4 max-w-[250px]">
+              <p class="font-medium">${esc(i.title)}</p>
+              <p class="text-xs text-slate-500">${esc(i.subtitle)}</p>
+            </td>
+            <td class="py-3 pr-4 max-w-[200px]"><ul class="list-disc ml-4 space-y-0.5 text-xs text-slate-600">${i.practice.map(p=>`<li>${esc(p)}</li>`).join('')}</ul></td>
+            <td class="py-3 max-w-[200px]"><ul class="list-disc ml-4 space-y-0.5 text-xs text-slate-600">${i.test.map(t=>`<li>${esc(t)}</li>`).join('')}</ul></td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>
+  </div>`;
+}
+
+// ── Interactions ──
+function toggle(id) {
+  const el = document.getElementById(id);
+  const chevron = document.getElementById('chevron-'+id);
+  el.classList.toggle('hidden');
+  chevron.style.transform = el.classList.contains('hidden') ? '' : 'rotate(180deg)';
+}
+
+function switchTab(tab) {
+  document.getElementById('tab-timeline').classList.toggle('hidden', tab !== 'timeline');
+  document.getElementById('tab-table').classList.toggle('hidden', tab !== 'table');
+  document.getElementById('btn-timeline').className = `tab-btn rounded-md px-4 py-1.5 text-sm font-medium ${tab==='timeline'?'bg-blue-50 text-blue-700':'text-slate-600 hover:bg-slate-100'}`;
+  document.getElementById('btn-table').className = `tab-btn rounded-md px-4 py-1.5 text-sm font-medium ${tab==='table'?'bg-blue-50 text-blue-700':'text-slate-600 hover:bg-slate-100'}`;
+}
+
+render();
+</script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
+<script>
+function downloadExcel() {
+  const wb = XLSX.utils.book_new();
+  const ws = {};
+  const merges = [];
+  const font = '조선일보명조';
+
+  // ── Detailed schedule data (from report format) ──
+  const schedule = [
+    { month:'1월', rows:[
+      { date:'01월 22일  [목]', cat:'교육', topic:'2026년 회계/기획 쉐어드 운영 방향 및 관리지표 수립 기준' },
+      { date:'01월 29일  [목]', cat:'이슈논의', topic:'2025년 인수인계서 피드백을 바탕으로 2026년 인수인계서 개선 (프로젝트 반영)\n(인수인계서-월별피드백-성과평가까지 이어지도록 정비)' },
+    ]},
+    { month:'2월', rows:[
+      { date:'02월 19일  [목]', cat:'교육', topic:'2026년 개정세법 주요 내용과 실무 적용 시 유의사항 [안진회계법인 세미나]' },
+      { date:'02월 26일  [목]', cat:'이슈논의', topic:'2025년 회계/기획 부문 쉐어드 평기 결과를 기반으로 2026년 개선 과제 및 실행 방향 협의' },
+    ]},
+    { month:'3월', rows:[
+      { date:'03월 16일  [월]', cat:'AI 교육', topic:'AI 기반 업무 혁신 키노트 및 Claude Code 개요', bg:'E2EFDA' },
+      { date:'03월 23일  [월]', cat:'AI 실습', topic:'프롬프트 설계 및 CLAUDE.md 기반 업무 자동화 실습', bg:'E2EFDA' },
+      { date:'03월 30일  [월]', cat:'AI 실습', topic:'커넥터 / 플러그인 활용 (Slack, Notion, Google Drive 연동)', bg:'E2EFDA' },
+    ]},
+    { month:'4월', rows:[
+      { date:'04월 06일  [월]', cat:'AI 실습', topic:'데이터베이스(Supabase) 기반 재무 데이터 관리 구조 설계', bg:'E2EFDA' },
+      { date:'04월 13일  [월]', cat:'AI 실습', topic:'엑셀 자동화 및 손익·관리지표 대시보드 구축', bg:'E2EFDA' },
+      { date:'04월 20일  [월]', cat:'AI 실습', topic:'권도균 대표님 강연 + 과제 솔루션 설계 & 개발 킥오프', bg:'E2EFDA' },
+      { date:'04월 24일  [목]', cat:'회계', topic:'월마감 체크리스트 이해 + Cut-off(수익/비용 인식) + 세금계산서 실무 통합 교육\n(마감 정확성 + 기간귀속 판단 + 세무 리스크 통제 집중)', bg:'DAEEF3' },
+    ]},
+    { month:'5월', rows:[
+      { date:'05월 08일  [목]', cat:'재무', topic:'CMS,펌뱅킹 자금집행 프로세스 이해 + 통제 포인트 점검 실습', bg:'FFF2CC' },
+      { date:'05월 22일  [목]', cat:'회계', topic:'대웅/대웅제약 연결회계 시스템 사용 교육\n: 연결 패키지 작성시 반복되는 오류 유형 정리 및 사전 점검 체크리스트 교육', bg:'DAEEF3' },
+    ]},
+    { month:'6월', rows:[
+      { date:'06월 11일  [목]', cat:'교육', topic:'특수관계자 거래와 증여세 리스크 사례 공유 및 실무 대응 방안 교육' },
+      { date:'06월 25일  [목]', cat:'이슈논의', topic:'회사별 KPI 운영 사례를 공유 및 개선 포인트 도출' },
+    ]},
+    { month:'7월', rows:[
+      { date:'07월 10일  [목]', cat:'교육', topic:'연결패키지 작성 시 반복되는 오류 유형 정리 및 사전 점검 체크리스트 교육' },
+      { date:'07월 24일  [목]', cat:'이슈논의', topic:'상반기 실적을 점검하고 회사별 관리지표 공유 및 관리지표 개선 방향 논의\n관리지표 활용한 경영 의사결정 우수사례 공유 및 현업 활용도 강화 방안 논의' },
+    ]},
+    { month:'8월', rows:[
+      { date:'08월 14일  [목]', cat:'교육', topic:'[AI 활용] 반복적인 회계업무 자동화 적용 사례와 프로세스 설계 내용 공유\n[AI 기반] 손익·관리지표 현업 직접 입력 → 자동 분석·보고 일괄 시스템 활용 방법 교육' },
+      { date:'08월 28일  [목]', cat:'이슈논의', topic:'AI 자동 분석 시스템 운영 이슈 및 개선 방향 논의' },
+    ]},
+    { month:'9월', rows:[
+      { date:'09월 11일  [목]', cat:'교육', topic:'IFRS 18 도입(영업 손익 정의 변경)에 따른 손익 관리에 미치는 영향 점검 (*27년부터 의무적용)' },
+      { date:'09월 25일  [목]', cat:'이슈논의', topic:'약가인하 등 제도 및 정책 변화가 사업계획에 미치는 영향과 조정 방향 논의' },
+    ]},
+    { month:'10월', rows:[
+      { date:'10월 16일  [목]', cat:'교육', topic:'2027년 개정세법(안) 주요 내용과 사전 대응 전략 [회계법인 세미나]' },
+      { date:'10월 30일  [목]', cat:'이슈논의', topic:'2027년 사업계획 수립 과정에서의 주요 이슈 점검 및 작성 기준 정비' },
+    ]},
+    { month:'11월', rows:[
+      { date:'11월 13일  [목]', cat:'교육', topic:'연말 결산 리스크 사전 점검 및 주요 오류 예방 체크포인트 교육' },
+      { date:'11월 27일  [목]', cat:'이슈논의', topic:'연간 관리지표 운영 성과를 돌아보고 개선 방향 확정 및 2027년 개선 방향 설계' },
+    ]},
+    { month:'12월', rows:[
+      { date:'12월 11일  [목]', cat:'교육', topic:'연말 결산 주요 체크리스트 교육 (세후 영업이익,부채비율 조정, 외감적용 대상 검토 등)' },
+      { date:'12월 23일  [목]', cat:'이슈논의', topic:'2026년 발생한 그룹내 공통 이슈를 공유하고 제도·프로세스 개선 과제 확정' },
+    ]},
+  ];
+
+  const border = { style:'thin', color:{ rgb:'000000' } };
+  const allBorder = { top:border, bottom:border, left:border, right:border };
+
+  // Helper
+  function cell(r, c, val, s) {
+    const addr = XLSX.utils.encode_cell({r, c});
+    ws[addr] = { v: val, t: 's', s };
+  }
+
+  // Base style
+  function baseStyle(opts = {}) {
+    return {
+      font: { name: font, sz: opts.sz || 10, bold: !!opts.bold, color: { rgb: opts.fontColor || '000000' } },
+      alignment: { wrapText: true, vertical: opts.valign || 'center', horizontal: opts.halign || 'left' },
+      ...(opts.border ? { border: allBorder } : {}),
+      ...(opts.bg ? { fill: { fgColor: { rgb: opts.bg } } } : {}),
+    };
+  }
+
+  let row = 0;
+
+  // ── Title ──
+  cell(row, 0, '■  2026년 기획/회계 쉐어드 학습과 소통 운영(안)', baseStyle({ sz:14, bold:true }));
+  merges.push({ s:{r:row,c:0}, e:{r:row,c:3} });
+  row += 2;
+
+  // ── 1. 목적과 취지 ──
+  cell(row, 0, '1. 목적과 취지', baseStyle({ sz:10, bold:true }));
+  merges.push({ s:{r:row,c:0}, e:{r:row,c:3} });
+  row++;
+  const purposes = [
+    '- 전 그룹사에 대웅제약 수준의 표준화된 업무기준, 프로세스 공유',
+    '- 내/외부 성공사례 및 벤치마킹 기반 교육을 통해  관리직원의 실무 전문성과 문제 해결 역량 강화',
+    '- 회사별 이슈사항 및 애로사항을 오픈하고 공동 해결함으로써 경영 리스크 사전 차단',
+    '- 인사제도(인수인계서, 월별피드백, CDP, 거현량 등)를 실무와 연계하여 성과관리와 인재육성이 함께 이루어지도록 운영 기반 강화',
+  ];
+  purposes.forEach(p => {
+    cell(row, 0, p, baseStyle({ sz:10 }));
+    merges.push({ s:{r:row,c:0}, e:{r:row,c:3} });
+    row++;
+  });
+  row++;
+
+  // ── 2. 참석 대상자 ──
+  cell(row, 0, '2. 참석 대상자', baseStyle({ sz:10, bold:true }));
+  merges.push({ s:{r:row,c:0}, e:{r:row,c:3} });
+  row++;
+  cell(row, 0, '- 대웅그룹 회계/기획 담당 실무자 및 직책자', baseStyle({ sz:10 }));
+  merges.push({ s:{r:row,c:0}, e:{r:row,c:3} });
+  row += 2;
+
+  // ── 3. 연간 일정과 주제 ──
+  cell(row, 0, '3. 연간 일정과 주제', baseStyle({ sz:10, bold:true }));
+  merges.push({ s:{r:row,c:0}, e:{r:row,c:3} });
+  row++;
+  cell(row, 0, '- 매월 2번째, 4번째 목요일 정기 운영 (월2회 체계화)', baseStyle({ sz:10 }));
+  merges.push({ s:{r:row,c:0}, e:{r:row,c:3} });
+  row++;
+  cell(row, 0, '  • 1회차: 그룹 공통 기준 및 회계, 세무 교육을 통한 전문성 강화', baseStyle({ sz:9 }));
+  merges.push({ s:{r:row,c:0}, e:{r:row,c:3} });
+  row++;
+  cell(row, 0, '  • 2회차: 회사별 이슈 공유 및 실시간 문제 해결 중심 워크숍', baseStyle({ sz:9 }));
+  merges.push({ s:{r:row,c:0}, e:{r:row,c:3} });
+  row++;
+  cell(row, 0, '- AI 바이브코딩 교육 프로그램 집중 운영 (3월~5월): AI교육 → 실습 → 실제 업무 자동화', baseStyle({ sz:10 }));
+  merges.push({ s:{r:row,c:0}, e:{r:row,c:3} });
+  row += 2;
+
+  // ── Table header ──
+  const headers = ['월', '날짜', '구분', '주제'];
+  const hdrStyle = baseStyle({ sz:10, bold:true, halign:'center', bg:'D9E2F3', border:true });
+  const tableStartRow = row;
+  headers.forEach((h, c) => cell(row, c, h, hdrStyle));
+  row++;
+
+  // ── Table rows ──
+  schedule.forEach(mo => {
+    const startRow = row;
+    mo.rows.forEach((r, ri) => {
+      const bg = r.bg || null;
+      const sty = baseStyle({ sz:10, border:true, ...(bg ? {bg} : {}), valign:'center' });
+      const styCtr = baseStyle({ sz:10, border:true, halign:'center', ...(bg ? {bg} : {}), valign:'center' });
+
+      cell(row, 0, ri === 0 ? mo.month : '', styCtr);
+      cell(row, 1, r.date, styCtr);
+      cell(row, 2, r.cat, styCtr);
+      cell(row, 3, r.topic, sty);
+      row++;
+    });
+    // Merge month cells
+    if (mo.rows.length > 1) {
+      merges.push({ s:{r:startRow,c:0}, e:{r:startRow + mo.rows.length - 1, c:0} });
+    }
+  });
+
+  // ── Merges ──
+  ws['!merges'] = merges;
+
+  // ── Column widths ──
+  ws['!cols'] = [
+    { wch: 6 },   // 월
+    { wch: 18 },  // 날짜
+    { wch: 10 },  // 구분
+    { wch: 80 },  // 주제
+  ];
+
+  // ── Row heights ──
+  ws['!rows'] = [];
+  // Title row
+  ws['!rows'][0] = { hpt: 26 };
+  // Table data rows: auto-fit based on content
+  for (let r = tableStartRow + 1; r < row; r++) {
+    const topicAddr = XLSX.utils.encode_cell({r, c:3});
+    const val = ws[topicAddr] ? ws[topicAddr].v : '';
+    const lines = val.split('\n').length;
+    ws['!rows'][r] = { hpt: Math.max(20, lines * 16) };
+  }
+
+  // ── Sheet ref ──
+  ws['!ref'] = XLSX.utils.encode_range({ s:{r:0,c:0}, e:{r:row-1, c:3} });
+
+  // ── Hide gridlines ──
+  ws['!sheetViews'] = [{ showGridLines: false }];
+
+  // ── Print: fit to one page ──
+  ws['!pageSetup'] = { fitToWidth: 1, fitToHeight: 1, orientation: 'landscape', paperSize: 9 };
+  ws['!printHeader'] = { fitToPage: true };
+
+  XLSX.utils.book_append_sheet(wb, ws, '학습과 소통 로드맵');
+
+  // Set workbook view to hide gridlines (fallback)
+  if (!wb.Workbook) wb.Workbook = {};
+  if (!wb.Workbook.Views) wb.Workbook.Views = [{}];
+  if (!wb.Workbook.Sheets) wb.Workbook.Sheets = [];
+  wb.Workbook.Sheets.push({ Hidden: 0, WSViews: [{ showGridLines: false }] });
+
+  XLSX.writeFile(wb, '2026_학습과소통_로드맵.xlsx');
+}
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.2/html2pdf.bundle.min.js"></script>
+<script>
+function downloadPDF() {
+  const btn = event.target.closest('button');
+  const origText = btn.innerHTML;
+  btn.innerHTML = '<svg class="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg> 생성중...';
+  btn.disabled = true;
+
+  // Hide buttons during capture
+  const header = document.querySelector('header');
+  const buttons = header.querySelector('.ml-auto');
+  buttons.style.display = 'none';
+
+  // Expand all timeline cards
+  const hiddenCards = [];
+  document.querySelectorAll('[id^="card-"]').forEach(el => {
+    if (el.classList.contains('hidden')) {
+      el.classList.remove('hidden');
+      hiddenCards.push(el);
+    }
+  });
+
+  const element = document.body;
+  const opt = {
+    margin:       [8, 5, 8, 5],
+    filename:     '2026_학습과소통_로드맵.pdf',
+    image:        { type: 'jpeg', quality: 0.98 },
+    html2canvas:  { scale: 2, useCORS: true, scrollY: 0, windowWidth: document.body.scrollWidth },
+    jsPDF:        { unit: 'mm', format: 'a3', orientation: 'portrait' },
+    pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] },
+  };
+
+  html2pdf().set(opt).from(element).save().then(() => {
+    // Restore buttons
+    buttons.style.display = '';
+    // Restore collapsed cards
+    hiddenCards.forEach(el => el.classList.add('hidden'));
+    btn.innerHTML = origText;
+    btn.disabled = false;
+  });
+}
+</script>
+</body>
+</html>
