@@ -12,8 +12,9 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { FileText, Printer } from 'lucide-react';
+import { FileText, Printer, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { downloadEvaluationExcel } from '@/utils/excel';
 
 interface Props {
   companies: Company[];
@@ -33,10 +34,16 @@ export function ReportSummary({ companies }: Props) {
           <FileText className="h-5 w-5" />
           경영진 보고용 요약
         </h2>
-        <Button variant="outline" size="sm" onClick={handlePrint} className="gap-1.5">
-          <Printer className="h-4 w-4" />
-          인쇄
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={() => downloadEvaluationExcel(companies)} className="gap-1.5">
+            <Download className="h-4 w-4" />
+            엑셀 다운로드
+          </Button>
+          <Button variant="outline" size="sm" onClick={handlePrint} className="gap-1.5">
+            <Printer className="h-4 w-4" />
+            인쇄
+          </Button>
+        </div>
       </div>
 
       {/* 보고서 헤더 (인쇄시 표시) */}
