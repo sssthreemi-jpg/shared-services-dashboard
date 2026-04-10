@@ -70,12 +70,12 @@ const roadmap = [
     content:['현금흐름표 구조 (영업/투자/재무 활동)','손익계산서와 현금흐름 간 차이','비현금 항목 조정 개념','운전자금 변동 이해','주요 오류 및 분류 착오 사례'],
     practice:['손익/재무상태표 기반 현금흐름표 작성','항목별 활동 구분 실습','오류 분류 수정 연습'],
     test:['현금흐름 분류 문제','잘못된 현금흐름표 수정 문제','영업/투자/재무활동 구분 판단 문제'] },
-  { month:9, half:'하반기', title:'상반기 실적 점검 및 회사별 관리지표 공유', subtitle:'관리지표 정합성 점검 + 개선 방향 도출 집중', owner:'쉐어드1팀',
+  { month:9, half:'하반기', title:'상반기 실적 점검 및 회사별 관리지표 공유', subtitle:'관리지표 정합성 점검 + 개선 방향 도출 집중', owner:'쉐어드',
     purpose:['상반기 실적을 기반으로 관리지표 운영 수준을 점검하고','회사별 지표의 적정성과 활용도를 개선'],
     content:['회사별 관리지표 구조 및 운영 현황','지표 정의 및 산출 방식 점검','지표 왜곡 및 비효율 사례','관리지표 개선 방향 및 기준'],
     practice:['회사별 지표 비교 분석','비효율 지표 식별 및 개선안 도출','지표 구조 재설계'],
     test:['관리지표 적정성 판단 문제','지표 오류 및 왜곡 사례 판별','지표 개선안 작성 문제'] },
-  { month:10, half:'하반기', title:'관리지표 활용한 경영 의사결정 우수사례 공유', subtitle:'지표 기반 의사결정 활용도 강화 집중', owner:'쉐어드1팀',
+  { month:10, half:'하반기', title:'관리지표 활용한 경영 의사결정 우수사례 공유', subtitle:'지표 기반 의사결정 활용도 강화 집중', owner:'쉐어드',
     purpose:['관리지표를 단순 보고가 아닌','경영 의사결정에 활용할 수 있는 역량 확보'],
     content:['관리지표 기반 의사결정 구조','우수 사례 분석 (매출/이익/비용 개선)','지표와 전략 간 연계 방법','지표 활용 실패 사례'],
     practice:['우수 사례 기반 의사결정 시나리오 분석','자사 적용 방안 설계','지표 기반 의사결정 흐름 구성'],
@@ -92,9 +92,9 @@ const roadmap = [
     test:['통합 사례 분석 문제','종합 오류 식별 문제','의사결정 및 개선안 도출 문제'] },
 ];
 
-const ownerBg   = { '재무':'bg-amber-100 text-amber-800 border border-amber-200', '회계':'bg-blue-100 text-blue-800 border border-blue-200', '쉐어드1팀':'bg-emerald-100 text-emerald-800 border border-emerald-200', '회계/기획':'bg-purple-100 text-purple-800 border border-purple-200', '기획':'bg-rose-100 text-rose-800 border border-rose-200' };
-const ownerDot  = { '재무':'bg-amber-500', '회계':'bg-blue-500', '쉐어드1팀':'bg-emerald-500', '회계/기획':'bg-purple-500', '기획':'bg-rose-500' };
-const ownerIcon = { '재무':'bg-amber-50', '회계':'bg-blue-50', '쉐어드1팀':'bg-emerald-50', '회계/기획':'bg-purple-50' };
+const ownerBg   = { '재무':'bg-amber-100 text-amber-800 border border-amber-200', '회계':'bg-blue-100 text-blue-800 border border-blue-200', '쉐어드':'bg-emerald-100 text-emerald-800 border border-emerald-200', '회계/기획':'bg-purple-100 text-purple-800 border border-purple-200', '기획':'bg-rose-100 text-rose-800 border border-rose-200' };
+const ownerDot  = { '재무':'bg-amber-500', '회계':'bg-blue-500', '쉐어드':'bg-emerald-500', '회계/기획':'bg-purple-500', '기획':'bg-rose-500' };
+const ownerIcon = { '재무':'bg-amber-50', '회계':'bg-blue-50', '쉐어드':'bg-emerald-50', '회계/기획':'bg-purple-50' };
 
 const now = new Date();
 const curMonth = now.getFullYear() === 2026 ? now.getMonth() + 1 : 0;
@@ -344,7 +344,7 @@ function downloadExcel() {
   const font = '조선일보명조';
 
   // Owner → row background color
-  const ownerBgExcel = { '재무':'FFF2CC', '회계':'DAEEF3', '쉐어드1팀':'E2EFDA', '회계/기획':'E8D5F5', '기획':'FCE4EC' };
+  const ownerBgExcel = { '재무':'FFF2CC', '회계':'DAEEF3', '쉐어드':'E2EFDA', '회계/기획':'E8D5F5', '기획':'FCE4EC' };
 
   const border = { style:'thin', color:{ rgb:'000000' } };
   const allBorder = { top:border, bottom:border, left:border, right:border };
