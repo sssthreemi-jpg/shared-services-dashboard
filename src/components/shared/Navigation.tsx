@@ -3,11 +3,13 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import { LayoutDashboard, Building2, ListTodo, FileText } from 'lucide-react';
+import { LayoutDashboard, Building2, ListTodo, FileText, GraduationCap, BookOpen } from 'lucide-react';
 
 const navItems = [
   { href: '/', label: '대시보드', icon: LayoutDashboard },
   { href: '/tasks', label: '과제관리', icon: ListTodo },
+  { href: '/learning', label: '학습과 소통', icon: GraduationCap },
+  { href: '/education', label: '교육운영', icon: BookOpen },
   { href: '/report', label: '보고용 요약', icon: FileText },
 ];
 
